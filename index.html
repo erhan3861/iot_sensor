@@ -952,12 +952,33 @@
         }
 
         // ── QUIZ LOGIC
+        // ── QUIZ LOGIC
         const quizzes = [
-            { q: 'Toprak nemi %25\'e düştüğünde hangi sensör uyarı verir?', opts: ['pH sensörü', 'Nem sensörü', 'Sıcaklık sensörü', 'CO₂ sensörü'], correct: 1 },
-            { q: 'Tarladaki IoT sensörleri, topladıkları verileri analiz edilmek üzere nereye gönderir?', opts: ['Bulut sunucusuna (Cloud)', 'USB belleğe', 'Yazıcıya', 'Sadece kendi ekranına'], correct: 0 },
-            { q: 'Sistem, pH değerini 5.0 olarak ölçerse log ekranında nasıl bir öneri sunar?', opts: ['Sulamayı artır', 'Sıcaklığı düşür', 'Kireç uygulaması yap', 'Beklemeye devam et'], correct: 2 },
-            { q: 'Büyük tarım arazilerinde sensör verilerini iletmek için kullanılan "LoRaWAN" teknolojisinin temel özelliği nedir?', opts: ['Hava tahmini yapması', 'Toprağı kendi kendine kazması', 'Sulama motorlarını çalıştırması', 'Uzun mesafeli ve düşük güç tüketimli veri iletimi sağlaması'], correct: 3 },
-            { q: 'Sensör verisi "41°C sıcaklık ve %18 toprak nemi" gösteriyorsa en mantıklı sistem aksiyonu ne olmalıdır?', opts: ['Gübreleme sistemini başlatmak', 'Sulamayı başlatmak ve uyarı göndermek', 'pH ölçümünü durdurmak', 'Hiçbir şey yapmamak'], correct: 1 },
+            {
+                q: 'Toprak nemi %25\'e düştüğünde hangi sensör uyarı verir?',
+                opts: ['Nem sensörü', 'pH sensörü', 'Sıcaklık sensörü', 'CO₂ sensörü'],
+                correct: 0
+            },
+            {
+                q: 'Tarladaki IoT sensörleri, topladıkları verileri analiz edilmek üzere nereye gönderir?',
+                opts: ['Bulut sunucusuna (Cloud)', 'USB belleğe', 'Yazıcıya', 'Sadece kendi ekranına'],
+                correct: 0
+            },
+            {
+                q: 'Sistem, pH değerini 5.0 olarak ölçerse log ekranında nasıl bir öneri sunar?',
+                opts: ['Kireç uygulaması yap', 'Sulamayı artır', 'Sıcaklığı düşür', 'Beklemeye devam et'],
+                correct: 0
+            },
+            {
+                q: 'Büyük tarım arazilerinde sensör verilerini iletmek için kullanılan "LoRaWAN" teknolojisinin temel özelliği nedir?',
+                opts: ['Uzun mesafeli ve düşük güç tüketimli veri iletimi sağlaması', 'Hava tahmini yapması', 'Toprağı kendi kendine kazması', 'Sulama motorlarını çalıştırması'],
+                correct: 0
+            },
+            {
+                q: 'Sensör verisi "41°C sıcaklık ve %18 toprak nemi" gösteriyorsa en mantıklı sistem aksiyonu ne olmalıdır?',
+                opts: ['Sulamayı başlatmak ve uyarı göndermek', 'Gübreleme sistemini başlatmak', 'pH ölçümünü durdurmak', 'Hiçbir şey yapmamak'],
+                correct: 0
+            },
         ];
 
         let qIdx = 0, qScore = 0;
