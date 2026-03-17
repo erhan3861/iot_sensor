@@ -1,367 +1,1025 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Modül 3 — Veriyle Tarım: Sensörler ve IoT</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;font-family:'Nunito',sans-serif}
-body{background:#0a0f1e;display:flex;flex-direction:column;color:#e0f4ff}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modül 3 — Veriyle Tarım: Sensörler ve IoT</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nunito:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
 
-/* SCANLINE OVERLAY */
-body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,150,0.015) 2px,rgba(0,255,150,0.015) 4px);pointer-events:none;z-index:1000}
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Nunito', sans-serif
+        }
 
-.header{
-  background:rgba(0,20,10,0.9);
-  border-bottom:1px solid rgba(0,255,150,0.2);
-  padding:8px 20px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.header-left{display:flex;align-items:center;gap:12px}
-.badge{background:rgba(0,255,150,0.15);border:1px solid rgba(0,255,150,0.4);color:#00ff96;font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 10px;border-radius:3px}
-.header h1{font-size:15px;font-weight:800;color:#e0f4ff}
-.live-dot{width:8px;height:8px;border-radius:50%;background:#00ff96;box-shadow:0 0 8px #00ff96;animation:blink 1.2s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-.live-label{font-family:'Share Tech Mono',monospace;font-size:12px;color:#00ff96;display:flex;align-items:center;gap:6px}
-.clock{font-family:'Share Tech Mono',monospace;font-size:13px;color:rgba(224,244,255,0.5)}
+        body {
+            background: #0a0f1e;
+            display: flex;
+            flex-direction: column;
+            color: #e0f4ff
+        }
 
-.main{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto 1fr;gap:8px;padding:10px;min-height:0;overflow:hidden}
+        /* SCANLINE OVERLAY */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 150, 0.015) 2px, rgba(0, 255, 150, 0.015) 4px);
+            pointer-events: none;
+            z-index: 1000
+        }
 
-/* SENSOR GAUGES - top row */
-.gauge-card{
-  background:rgba(0,20,10,0.6);
-  border:1px solid rgba(0,255,150,0.15);
-  border-radius:12px;
-  padding:12px;
-  display:flex;flex-direction:column;gap:6px;
-  position:relative;overflow:hidden;
-}
-.gauge-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent);
-  animation:scanH 3s linear infinite;
-}
-@keyframes scanH{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+        .header {
+            background: rgba(0, 20, 10, 0.9);
+            border-bottom: 1px solid rgba(0, 255, 150, 0.2);
+            padding: 10px 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1001;
+        }
 
-.gc-top{display:flex;align-items:center;justify-content:space-between}
-.gc-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(224,244,255,0.5)}
-.gc-icon{font-size:18px}
-.gc-value{font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;line-height:1}
-.gc-unit{font-size:12px;color:rgba(224,244,255,0.5);margin-left:2px}
-.gc-status{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600}
-.status-dot{width:6px;height:6px;border-radius:50%}
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
 
-.gauge-arc{position:relative;display:flex;align-items:center;justify-content:center;margin:4px 0}
-svg.arc{width:80px;height:45px}
+        .badge {
+            background: rgba(0, 255, 150, 0.15);
+            border: 1px solid rgba(0, 255, 150, 0.4);
+            color: #00ff96;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 3px;
+            letter-spacing: 1px
+        }
 
-.mini-graph{height:30px;position:relative;overflow:hidden}
-.mini-graph canvas{width:100%;height:100%}
+        .header h1 {
+            font-size: 16px;
+            font-weight: 800;
+            color: #e0f4ff;
+            font-family: 'Share Tech Mono', monospace;
+        }
 
-/* BOTTOM AREA: Map + Log + Quiz */
-.field-section{
-  grid-column:1/3;
-  background:rgba(0,20,10,0.6);
-  border:1px solid rgba(0,255,150,0.15);
-  border-radius:12px;
-  padding:12px;
-  display:flex;flex-direction:column;gap:8px;
-  min-height:0;
-}
-.section-title{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(0,255,150,0.6)}
+        /* Yeni Butonlar */
+        .icon-btn {
+            background: rgba(0, 255, 150, 0.1);
+            border: 1px solid rgba(0, 255, 150, 0.3);
+            color: #00ff96;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-.field-grid{
-  flex:1;
-  display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);
-  gap:4px;min-height:0;
-}
-.field-cell{
-  border-radius:4px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;cursor:pointer;
-  transition:all 0.3s;
-  position:relative;
-}
-.field-cell .cell-val{
-  position:absolute;bottom:-1px;left:0;right:0;
-  font-family:'Share Tech Mono',monospace;font-size:8px;
-  text-align:center;color:rgba(255,255,255,0.8);
-}
-.cell-ok{background:rgba(0,255,150,0.2)}
-.cell-warn{background:rgba(255,200,0,0.25);animation:warnPulse 2s ease-in-out infinite}
-.cell-alert{background:rgba(255,60,60,0.25);animation:warnPulse 1s ease-in-out infinite}
-@keyframes warnPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        .icon-btn:hover {
+            background: rgba(0, 255, 150, 0.25);
+            border-color: #00ff96;
+            transform: translateY(-1px);
+        }
 
-.field-legend{display:flex;gap:12px;flex-shrink:0}
-.fl-item{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(224,244,255,0.6)}
-.fl-dot{width:10px;height:10px;border-radius:2px}
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
 
-.log-section{
-  background:rgba(0,20,10,0.6);
-  border:1px solid rgba(0,255,150,0.15);
-  border-radius:12px;
-  padding:12px;
-  display:flex;flex-direction:column;gap:8px;
-  min-height:0;
-  overflow:hidden;
-}
-.log-feed{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0}
-.log-entry{
-  font-family:'Share Tech Mono',monospace;font-size:11px;
-  padding:5px 8px;border-radius:4px;
-  background:rgba(0,255,150,0.05);
-  border-left:2px solid rgba(0,255,150,0.3);
-  animation:logIn 0.3s ease;
-  color:rgba(224,244,255,0.8);
-  line-height:1.4;
-}
-.log-entry.warn{border-left-color:#ffb300;background:rgba(255,179,0,0.08);color:#fff3b0}
-.log-entry.alert{border-left-color:#ff4444;background:rgba(255,68,68,0.1);color:#ffb3b3}
-@keyframes logIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff96;
+            box-shadow: 0 0 8px #00ff96;
+            animation: blink 1.2s ease-in-out infinite
+        }
 
-.quiz-section{
-  background:rgba(0,20,10,0.6);
-  border:1px solid rgba(0,255,150,0.15);
-  border-radius:12px;
-  padding:12px;
-  display:flex;flex-direction:column;gap:8px;
-}
-.quiz-q{font-size:13px;font-weight:700;color:#e0f4ff;line-height:1.4}
-.quiz-opts{display:flex;flex-direction:column;gap:6px;flex:1}
-.qopt{background:rgba(0,255,150,0.06);border:1px solid rgba(0,255,150,0.2);border-radius:7px;padding:8px 12px;font-size:12px;cursor:pointer;text-align:left;color:#e0f4ff;transition:all 0.2s;font-family:'Nunito',sans-serif;font-weight:600}
-.qopt:hover{background:rgba(0,255,150,0.15);border-color:rgba(0,255,150,0.5)}
-.qopt.correct{background:rgba(0,255,150,0.2);border-color:#00ff96;color:#b3ffd9}
-.qopt.wrong{background:rgba(255,68,68,0.15);border-color:#ff4444;color:#ffb3b3}
-.quiz-result{font-size:13px;font-weight:700;padding:8px;border-radius:7px;text-align:center}
-.quiz-next{background:rgba(0,255,150,0.2);border:1px solid rgba(0,255,150,0.4);color:#00ff96;padding:8px 16px;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Nunito',sans-serif;transition:all 0.2s}
-.quiz-next:hover{background:rgba(0,255,150,0.3)}
-.score-display{font-family:'Share Tech Mono',monospace;font-size:12px;color:#00ff96;text-align:right}
-</style>
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.3
+            }
+        }
+
+        .live-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: #00ff96;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .clock {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: rgba(224, 244, 255, 0.5)
+        }
+
+        .main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto 1fr;
+            gap: 8px;
+            padding: 10px;
+            min-height: 0;
+            overflow: hidden;
+            position: relative;
+            z-index: 1
+        }
+
+        /* SENSOR GAUGES */
+        .gauge-card {
+            background: rgba(0, 20, 10, 0.6);
+            border: 1px solid rgba(0, 255, 150, 0.15);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gauge-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            animation: scanH 3s linear infinite;
+        }
+
+        @keyframes scanH {
+            0% {
+                transform: translateX(-100%)
+            }
+
+            100% {
+                transform: translateX(100%)
+            }
+        }
+
+        .gc-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .gc-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(224, 244, 255, 0.5)
+        }
+
+        .gc-icon {
+            font-size: 18px
+        }
+
+        .gc-value {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1
+        }
+
+        .gc-unit {
+            font-size: 12px;
+            color: rgba(224, 244, 255, 0.5);
+            margin-left: 2px
+        }
+
+        .gc-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%
+        }
+
+        .mini-graph {
+            height: 30px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .mini-graph canvas {
+            width: 100%;
+            height: 100%
+        }
+
+        /* BOTTOM AREA */
+        .field-section {
+            grid-column: 1/3;
+            background: rgba(0, 20, 10, 0.6);
+            border: 1px solid rgba(0, 255, 150, 0.15);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+        }
+
+        .section-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(0, 255, 150, 0.8)
+        }
+
+        .field-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 4px;
+            min-height: 0;
+        }
+
+        .field-cell {
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .field-cell .cell-val {
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 8px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .cell-ok {
+            background: rgba(0, 255, 150, 0.15);
+            border: 1px solid rgba(0, 255, 150, 0.2);
+        }
+
+        .cell-warn {
+            background: rgba(255, 200, 0, 0.2);
+            border: 1px solid rgba(255, 200, 0, 0.3);
+            animation: warnPulse 2s ease-in-out infinite
+        }
+
+        .cell-alert {
+            background: rgba(255, 60, 60, 0.2);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            animation: warnPulse 1s ease-in-out infinite
+        }
+
+        .field-legend {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0
+        }
+
+        .fl-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            color: rgba(224, 244, 255, 0.6);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .fl-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px
+        }
+
+        .log-section {
+            background: rgba(0, 20, 10, 0.6);
+            border: 1px solid rgba(0, 255, 150, 0.15);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .log-feed {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-height: 0
+        }
+
+        .log-entry {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            background: rgba(0, 255, 150, 0.05);
+            border-left: 2px solid rgba(0, 255, 150, 0.3);
+            animation: logIn 0.3s ease;
+            color: rgba(224, 244, 255, 0.8);
+            line-height: 1.4;
+        }
+
+        .log-entry.warn {
+            border-left-color: #ffb300;
+            background: rgba(255, 179, 0, 0.08);
+            color: #fff3b0
+        }
+
+        .log-entry.alert {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            color: #ffb3b3
+        }
+
+        .quiz-section {
+            background: rgba(0, 20, 10, 0.6);
+            border: 1px solid rgba(0, 255, 150, 0.15);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quiz-q {
+            font-size: 13px;
+            font-weight: 700;
+            color: #e0f4ff;
+            line-height: 1.4;
+            min-height: 36px;
+        }
+
+        .quiz-opts {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1
+        }
+
+        .qopt {
+            background: rgba(0, 255, 150, 0.06);
+            border: 1px solid rgba(0, 255, 150, 0.2);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: left;
+            color: #e0f4ff;
+            transition: all 0.2s;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 600
+        }
+
+        .qopt:hover:not(:disabled) {
+            background: rgba(0, 255, 150, 0.15);
+            border-color: rgba(0, 255, 150, 0.5)
+        }
+
+        .qopt.correct {
+            background: rgba(0, 255, 150, 0.2);
+            border-color: #00ff96;
+            color: #b3ffd9
+        }
+
+        .qopt.wrong {
+            background: rgba(255, 68, 68, 0.15);
+            border-color: #ff4444;
+            color: #ffb3b3
+        }
+
+        .quiz-next {
+            background: rgba(0, 255, 150, 0.15);
+            border: 1px solid #00ff96;
+            color: #00ff96;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'Share Tech Mono', monospace;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            margin-top: auto;
+        }
+
+        .quiz-next:hover {
+            background: #00ff96;
+            color: #000;
+        }
+
+        .score-display {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: #00ff96;
+            text-align: right
+        }
+
+        /* MODALS */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 10, 5, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            background: rgba(0, 20, 10, 0.95);
+            border: 1px solid #00ff96;
+            box-shadow: 0 0 30px rgba(0, 255, 150, 0.15);
+            border-radius: 8px;
+            padding: 32px;
+            max-width: 550px;
+            width: 90%;
+            transform: scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal.show .modal-card {
+            transform: scale(1);
+        }
+
+        /* Info Modal Content */
+        .modal-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 20px;
+            color: #00ff96;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 1px;
+        }
+
+        .info-section {
+            background: rgba(0, 255, 150, 0.03);
+            border: 1px solid rgba(0, 255, 150, 0.1);
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+        }
+
+        .info-section h3 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: #64b4ff;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .info-step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .step-icon {
+            font-size: 20px;
+            background: rgba(0, 255, 150, 0.1);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 150, 0.2);
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 14px;
+            color: rgba(224, 244, 255, 0.8);
+            line-height: 1.5;
+            padding-top: 4px;
+        }
+
+        .badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge-item {
+            background: rgba(0, 255, 150, 0.1);
+            border: 1px solid rgba(0, 255, 150, 0.3);
+            color: #00ff96;
+            padding: 4px 10px;
+            border-radius: 2px;
+            font-size: 11px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+        }
+
+        .modal-btn {
+            background: rgba(0, 255, 150, 0.15);
+            border: 1px solid #00ff96;
+            color: #00ff96;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 12px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            border-radius: 4px;
+        }
+
+        .modal-btn:hover {
+            background: #00ff96;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 150, 0.4);
+        }
+
+        /* End Screens */
+        .end-screen {
+            text-align: center;
+            padding: 10px;
+        }
+
+        .end-icon {
+            font-size: 64px;
+            margin-bottom: 10px;
+        }
+
+        .end-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 28px;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        .success-title {
+            color: #00ff96;
+        }
+
+        .fail-title {
+            color: #ff4444;
+        }
+
+        .end-desc {
+            font-size: 14px;
+            color: rgba(224, 244, 255, 0.7);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .secret-box {
+            background: rgba(0, 255, 150, 0.05);
+            border: 1px dashed #00ff96;
+            padding: 20px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            animation: blink 2s infinite;
+        }
+
+        .secret-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: #00ff96;
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .secret-code {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 36px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(0, 255, 150, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .fail-box {
+            background: rgba(255, 68, 68, 0.05);
+            border: 1px dashed #ff4444;
+            padding: 20px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+        }
+
+        .fail-text {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 16px;
+            color: #ffb3b3;
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="header">
-  <div class="header-left">
-    <span class="badge">MODÜL 3</span>
-    <h1>📡 Veriyle Tarım: Sensörler ve IoT</h1>
-  </div>
-  <div style="display:flex;align-items:center;gap:20px">
-    <div class="live-label"><div class="live-dot"></div>CANLI VERİ</div>
-    <div class="clock" id="clock">--:--:--</div>
-  </div>
-</div>
-
-<div class="main" id="mainGrid">
-  <!-- 4 gauge cards -->
-  <div class="gauge-card" style="--accent:#00ff96">
-    <div class="gc-top"><span class="gc-label">💧 Toprak Nemi</span><span class="gc-icon">💧</span></div>
-    <div><span class="gc-value" id="val-nem">--</span><span class="gc-unit">%</span></div>
-    <div class="gc-status"><div class="status-dot" id="dot-nem"></div><span id="lbl-nem">--</span></div>
-    <canvas id="g-nem" width="200" height="30"></canvas>
-  </div>
-  <div class="gauge-card" style="--accent:#ff8c00">
-    <div class="gc-top"><span class="gc-label">🌡️ Sıcaklık</span><span class="gc-icon">🌡️</span></div>
-    <div><span class="gc-value" id="val-temp">--</span><span class="gc-unit">°C</span></div>
-    <div class="gc-status"><div class="status-dot" id="dot-temp"></div><span id="lbl-temp">--</span></div>
-    <canvas id="g-temp" width="200" height="30"></canvas>
-  </div>
-  <div class="gauge-card" style="--accent:#42a5f5">
-    <div class="gc-top"><span class="gc-label">☁️ Hava Nemi</span><span class="gc-icon">☁️</span></div>
-    <div><span class="gc-value" id="val-hava">--</span><span class="gc-unit">%</span></div>
-    <div class="gc-status"><div class="status-dot" id="dot-hava"></div><span id="lbl-hava">--</span></div>
-    <canvas id="g-hava" width="200" height="30"></canvas>
-  </div>
-  <div class="gauge-card" style="--accent:#a78bfa">
-    <div class="gc-top"><span class="gc-label">⚗️ Toprak pH</span><span class="gc-icon">⚗️</span></div>
-    <div><span class="gc-value" id="val-ph">--</span><span class="gc-unit">pH</span></div>
-    <div class="gc-status"><div class="status-dot" id="dot-ph"></div><span id="lbl-ph">--</span></div>
-    <canvas id="g-ph" width="200" height="30"></canvas>
-  </div>
-
-  <!-- Field map -->
-  <div class="field-section">
-    <div class="section-title">🗺️ Tarla Sensör Haritası (24 Nokta)</div>
-    <div class="field-grid" id="fieldGrid"></div>
-    <div class="field-legend">
-      <div class="fl-item"><div class="fl-dot" style="background:rgba(0,255,150,0.4)"></div>Normal</div>
-      <div class="fl-item"><div class="fl-dot" style="background:rgba(255,200,0,0.4)"></div>Uyarı</div>
-      <div class="fl-item"><div class="fl-dot" style="background:rgba(255,60,60,0.4)"></div>Kritik</div>
+    <div class="header">
+        <div class="header-left">
+            <button class="icon-btn" onclick="openModal('infoModal')">ℹ️ SİSTEM BİLGİSİ</button>
+            <span class="badge">MODÜL 3</span>
+            <h1>📡 VERİYLE TARIM: SENSÖRLER VE IOT</h1>
+        </div>
+        <div class="header-right">
+            <div class="live-label">
+                <div class="live-dot"></div>CANLI VERİ AĞI
+            </div>
+            <div class="clock" id="clock">--:--:--</div>
+            <button class="icon-btn" id="fsBtn" onclick="toggleFullScreen()">⛶ TAM EKRAN</button>
+        </div>
     </div>
-  </div>
 
-  <!-- Log feed -->
-  <div class="log-section">
-    <div class="section-title">📋 Sensör Veri Akışı</div>
-    <div class="log-feed" id="logFeed"></div>
-  </div>
+    <div class="main" id="mainGrid">
+        <div class="gauge-card" style="--accent:#00ff96">
+            <div class="gc-top"><span class="gc-label">💧 Toprak Nemi</span><span class="gc-icon">💧</span></div>
+            <div><span class="gc-value" id="val-nem">--</span><span class="gc-unit">%</span></div>
+            <div class="gc-status">
+                <div class="status-dot" id="dot-nem"></div><span id="lbl-nem">--</span>
+            </div>
+            <canvas id="g-nem" width="200" height="30"></canvas>
+        </div>
+        <div class="gauge-card" style="--accent:#ff8c00">
+            <div class="gc-top"><span class="gc-label">🌡️ Sıcaklık</span><span class="gc-icon">🌡️</span></div>
+            <div><span class="gc-value" id="val-temp">--</span><span class="gc-unit">°C</span></div>
+            <div class="gc-status">
+                <div class="status-dot" id="dot-temp"></div><span id="lbl-temp">--</span>
+            </div>
+            <canvas id="g-temp" width="200" height="30"></canvas>
+        </div>
+        <div class="gauge-card" style="--accent:#42a5f5">
+            <div class="gc-top"><span class="gc-label">☁️ Hava Nemi</span><span class="gc-icon">☁️</span></div>
+            <div><span class="gc-value" id="val-hava">--</span><span class="gc-unit">%</span></div>
+            <div class="gc-status">
+                <div class="status-dot" id="dot-hava"></div><span id="lbl-hava">--</span>
+            </div>
+            <canvas id="g-hava" width="200" height="30"></canvas>
+        </div>
+        <div class="gauge-card" style="--accent:#a78bfa">
+            <div class="gc-top"><span class="gc-label">⚗️ Toprak pH</span><span class="gc-icon">⚗️</span></div>
+            <div><span class="gc-value" id="val-ph">--</span><span class="gc-unit">pH</span></div>
+            <div class="gc-status">
+                <div class="status-dot" id="dot-ph"></div><span id="lbl-ph">--</span>
+            </div>
+            <canvas id="g-ph" width="200" height="30"></canvas>
+        </div>
 
-  <!-- Quiz -->
-  <div class="quiz-section">
-    <div class="section-title">🧠 Veri Yorumlama</div>
-    <div class="score-display">Puan: <span id="quizScore">0</span> / <span id="quizTotal">0</span></div>
-    <div class="quiz-q" id="quizQ">Hazırlanıyor...</div>
-    <div class="quiz-opts" id="quizOpts"></div>
-  </div>
-</div>
+        <div class="field-section">
+            <div class="section-title">🗺️ Sensör Ağ Haritası (24 Düğüm)</div>
+            <div class="field-grid" id="fieldGrid"></div>
+            <div class="field-legend">
+                <div class="fl-item">
+                    <div class="fl-dot" style="background:rgba(0,255,150,0.4)"></div>Optimal Veri
+                </div>
+                <div class="fl-item">
+                    <div class="fl-dot" style="background:rgba(255,200,0,0.4)"></div>Uyarı Eşiği
+                </div>
+                <div class="fl-item">
+                    <div class="fl-dot" style="background:rgba(255,60,60,0.4)"></div>Kritik Alarm
+                </div>
+            </div>
+        </div>
 
-<script>
-// ── CLOCK
-function updateClock(){
-  document.getElementById('clock').textContent = new Date().toLocaleTimeString('tr-TR');
-}
-setInterval(updateClock,1000); updateClock();
+        <div class="log-section">
+            <div class="section-title">📋 Sistem Logları (Gerçek Zamanlı)</div>
+            <div class="log-feed" id="logFeed"></div>
+        </div>
 
-// ── SENSOR DATA
-const sensors = {
-  nem:  {cur:62, min:18, max:95, ideal:[40,75], history:[], color:'#00ff96'},
-  temp: {cur:24, min:5,  max:45, ideal:[15,35], history:[], color:'#ff8c00'},
-  hava: {cur:58, min:20, max:95, ideal:[40,80], history:[], color:'#42a5f5'},
-  ph:   {cur:6.8,min:4,  max:9,  ideal:[6.0,7.5], history:[], color:'#a78bfa'},
-};
-const sensorNames={nem:'Toprak Nemi',temp:'Sıcaklık',hava:'Hava Nemi',ph:'Toprak pH'};
-const sensorUnits={nem:'%',temp:'°C',hava:'%',ph:'pH'};
+        <div class="quiz-section">
+            <div class="section-title">🧠 Veri Analizi Sınaması</div>
+            <div class="score-display">Puan: <span id="quizScore">0</span> / 5</div>
+            <div class="quiz-q" id="quizQ">Sistem Yükleniyor...</div>
+            <div class="quiz-opts" id="quizOpts"></div>
+        </div>
+    </div>
 
-function statusOf(k,v){
-  const s=sensors[k];
-  if(v<s.ideal[0]||v>s.ideal[1]) return v<s.ideal[0]?{txt:'⬇️ DÜŞÜK',col:'#ff4444'}:{txt:'⬆️ YÜKSEK',col:'#ffb300'};
-  return {txt:'✅ NORMAL',col:'#00ff96'};
-}
+    <div class="modal" id="infoModal">
+        <div class="modal-card">
+            <div class="modal-title">ℹ️ SİSTEM REHBERİ</div>
 
-function updateSensors(){
-  Object.keys(sensors).forEach(k=>{
-    const s=sensors[k];
-    const delta=(Math.random()-0.48)*1.5*(k==='ph'?0.1:1);
-    s.cur=Math.max(s.min,Math.min(s.max,+(s.cur+delta).toFixed(k==='ph'?1:1)));
-    s.history.push(s.cur);
-    if(s.history.length>40) s.history.shift();
+            <div class="info-section">
+                <h3>GÖREV PROTOKOLÜ</h3>
+                <div class="info-step">
+                    <div class="step-icon">📡</div>
+                    <div class="step-text"><strong>Verileri İzle:</strong> Üst paneldeki anlık sensör verilerini ve sol
+                        alttaki tarla haritasını gözlemle. Değerler normal sınırların dışına çıkarsa sistem uyarı verir.
+                    </div>
+                </div>
+                <div class="info-step">
+                    <div class="step-icon">📋</div>
+                    <div class="step-text"><strong>Logları Oku:</strong> Ortadaki sistem logları, tarladaki anlık
+                        değişimleri ve IoT cihazlarının bulut sunucusuyla iletişimini gösterir.</div>
+                </div>
+                <div class="info-step">
+                    <div class="step-icon">🧠</div>
+                    <div class="step-text"><strong>Sınamayı Geç:</strong> Sağ alttaki "Veri Analizi Sınaması"nda yer
+                        alan 5 sorunun <strong>en az 4'üne</strong> doğru cevap vererek modül şifresini çöz!</div>
+                </div>
+            </div>
 
-    const disp=k==='ph'?s.cur.toFixed(1):Math.round(s.cur);
-    document.getElementById(`val-${k}`).textContent=disp;
-    const st=statusOf(k,s.cur);
-    document.getElementById(`dot-${k}`).style.background=st.col;
-    document.getElementById(`dot-${k}`).style.boxShadow=`0 0 6px ${st.col}`;
-    document.getElementById(`lbl-${k}`).textContent=st.txt;
-    document.getElementById(`lbl-${k}`).style.color=st.col;
-    drawMiniGraph(k);
-  });
-  updateFieldGrid();
-  maybeAddLog();
-}
+            <div class="info-section">
+                <h3>MAARİF MODELİ KAZANIMLARI</h3>
+                <div class="badge-list">
+                    <span class="badge-item">Dijital Okuryazarlık</span>
+                    <span class="badge-item">Veri Analizi</span>
+                    <span class="badge-item">Eleştirel Düşünme</span>
+                    <span class="badge-item">Problem Çözme</span>
+                </div>
+            </div>
 
-function drawMiniGraph(k){
-  const canvas=document.getElementById(`g-${k}`);
-  if(!canvas) return;
-  const ctx=canvas.getContext('2d');
-  const w=canvas.width,h=canvas.height;
-  ctx.clearRect(0,0,w,h);
-  const hist=sensors[k].history;
-  if(hist.length<2) return;
-  const s=sensors[k];
-  const range=s.max-s.min;
-  ctx.strokeStyle=s.color;
-  ctx.lineWidth=2;
-  ctx.shadowColor=s.color;
-  ctx.shadowBlur=4;
-  ctx.beginPath();
-  hist.forEach((v,i)=>{
-    const x=(i/(hist.length-1))*w;
-    const y=h-(((v-s.min)/range)*h);
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-  });
-  ctx.stroke();
-  // ideal range fill
-  ctx.globalAlpha=0.06;
-  ctx.fillStyle=s.color;
-  const y1=h-(((s.ideal[1]-s.min)/range)*h);
-  const y2=h-(((s.ideal[0]-s.min)/range)*h);
-  ctx.fillRect(0,y1,w,y2-y1);
-  ctx.globalAlpha=1;
-}
+            <button class="modal-btn" onclick="closeModal('infoModal')">SİSTEME GİRİŞ YAP</button>
+        </div>
+    </div>
 
-// ── FIELD GRID
-const fieldGrid=document.getElementById('fieldGrid');
-const cells=[];
-for(let i=0;i<24;i++){
-  const c=document.createElement('div');
-  c.className='field-cell cell-ok';
-  c.innerHTML='🌾<span class="cell-val">--</span>';
-  fieldGrid.appendChild(c);
-  cells.push(c);
-}
-function updateFieldGrid(){
-  const nem=sensors.nem.cur;
-  cells.forEach((c,i)=>{
-    const noise=(Math.random()-0.5)*20;
-    const v=Math.max(10,Math.min(100,nem+noise));
-    c.querySelector('.cell-val').textContent=Math.round(v)+'%';
-    c.className='field-cell '+(v<30?'cell-alert':v<45?'cell-warn':'cell-ok');
-  });
-}
+    <div class="modal" id="successModal">
+        <div class="modal-card end-screen">
+            <div class="end-icon" style="animation:blink 1.5s ease infinite;">✅</div>
+            <div class="end-title success-title">SİSTEM HACKLENDİ!</div>
+            <div class="end-desc">Harika bir veri analistisin. IoT sisteminin nasıl çalıştığını, sensör verilerinin ne
+                anlama geldiğini başarıyla kanıtladın. Tarımın dijital geleceği senin ellerinde.</div>
 
-// ── LOG FEED
-const logFeed=document.getElementById('logFeed');
-const logMessages=[
-  ()=>{ const v=Math.round(sensors.nem.cur); return {txt:`[NEM-03] Blok C3 nem: ${v}% — ${v<40?'⚠️ UYARI: Sulama gerekebilir':'✅ Normal aralık'}`,cls:v<40?'warn':''}},
-  ()=>{ const v=Math.round(sensors.temp.cur); return {txt:`[TEMP-07] Hava sıcaklığı: ${v}°C — ${v>38?'🔥 YÜKSEK: Buharlaşma artıyor':'✅ Uygun'}`,cls:v>38?'alert':''}},
-  ()=>{ return {txt:`[pH-02] Toprak pH: ${sensors.ph.cur.toFixed(1)} — ${sensors.ph.cur<6.0?'⚠️ Kireç uygulaması önerilir':'✅ Optimal aralık'}`,cls:sensors.ph.cur<6.0?'warn':''}},
-  ()=>{ return {txt:`[SYS] Veri paketi gönderildi → Sunucu: agrisim.cloud ✅`,cls:''}},
-  ()=>{ return {txt:`[HAVA] Hava nemi: ${Math.round(sensors.hava.cur)}% — Fungi riski: ${sensors.hava.cur>80?'⚠️ YÜKSEK':'Düşük'}`,cls:sensors.hava.cur>80?'warn':''}},
-];
-let logIdx=0;
-function maybeAddLog(){
-  if(Math.random()<0.3){
-    const msg=logMessages[logIdx%logMessages.length]();
-    logIdx++;
-    const entry=document.createElement('div');
-    entry.className='log-entry '+(msg.cls||'');
-    const ts=new Date().toLocaleTimeString('tr-TR');
-    entry.textContent=`${ts} ${msg.txt}`;
-    logFeed.prepend(entry);
-    while(logFeed.children.length>12) logFeed.lastChild.remove();
-  }
-}
+            <div class="secret-box">
+                <div class="secret-label">GİZLİ ŞİFRE DEŞİFRE EDİLDİ</div>
+                <div class="secret-code">tobb</div>
+            </div>
 
-// ── QUIZ
-const quizzes=[
-  {q:'Toprak nemi %25\'e düştüğünde hangi sensör uyarı verir?',opts:['pH sensörü','Nem sensörü','Sıcaklık sensörü','CO₂ sensörü'],correct:1},
-  {q:'IoT sensörler veriyi nereye gönderir?',opts:['USB bellek','Bulut sunucusu','Yazıcı','Sadece ekrana'],correct:1},
-  {q:'pH değeri 5.5 olan toprakta ne yapılmalıdır?',opts:['Sulama artır','Kireç ekle','Sıcaklık düşür','Bekle'],correct:1},
-  {q:'LoRaWAN teknolojisi ne işe yarar?',opts:['Sulama yapar','Uzun mesafeli düşük güçlü veri iletimi','Toprak kazar','Hava tahmini'],correct:1},
-  {q:'Sensör verisi "41°C sıcaklık" gösteriyorsa ne yapmalısın?',opts:['Gübre ekle','Sulama artır ve gölge kur','pH ölç','Bekle'],correct:1},
-];
-let qIdx=0, qScore=0, qTotal=0;
-function loadQuiz(){
-  const q=quizzes[qIdx%quizzes.length];
-  document.getElementById('quizQ').textContent=q.q;
-  const opts=document.getElementById('quizOpts');
-  opts.innerHTML=q.opts.map((o,i)=>`<button class="qopt" onclick="answerQ(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
-}
-function answerQ(i){
-  const q=quizzes[qIdx%quizzes.length];
-  const correct=i===q.correct;
-  qTotal++;
-  if(correct) qScore++;
-  document.getElementById('quizScore').textContent=qScore;
-  document.getElementById('quizTotal').textContent=qTotal;
-  document.querySelectorAll('.qopt').forEach((o,j)=>{
-    o.disabled=true;
-    if(j===q.correct) o.classList.add('correct');
-    else if(j===i&&!correct) o.classList.add('wrong');
-  });
-  const opts=document.getElementById('quizOpts');
-  const btn=document.createElement('button');
-  btn.className='quiz-next';
-  btn.textContent='→ Sonraki Soru';
-  btn.onclick=()=>{ qIdx++; loadQuiz(); };
-  opts.appendChild(btn);
-}
-loadQuiz();
+            <button class="modal-btn" onclick="location.reload()">SİSTEMİ YENİDEN BAŞLAT</button>
+        </div>
+    </div>
 
-// ── INIT
-for(let k in sensors){const s=sensors[k];for(let i=0;i<20;i++){s.history.push(s.cur+(Math.random()-0.5)*5*(k==='ph'?0.2:1));}}
-updateSensors();
-setInterval(updateSensors,1500);
-</script>
+    <div class="modal" id="failModal">
+        <div class="modal-card end-screen">
+            <div class="end-icon">⚠️</div>
+            <div class="end-title fail-title">ANALİZ BAŞARISIZ</div>
+            <div class="end-desc">Verileri yorumlamada hatalar tespit edildi. Şifreyi elde edebilmek için 5 sorunun en
+                az 4'üne doğru cevap vermelisin.</div>
+
+            <div class="fail-box">
+                <div class="fail-text">Puanın: <span id="failScore">0</span>/5</div>
+            </div>
+
+            <button class="modal-btn" onclick="resetQuiz()">VERİLERİ TEKRAR İNCELE VE DENE</button>
+        </div>
+    </div>
+
+    <script>
+        // ── FULLSCREEN
+        function toggleFullScreen() {
+            const elem = document.documentElement;
+            const btn = document.getElementById('fsBtn');
+            if (!document.fullscreenElement) {
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                btn.textContent = "🗗 KÜÇÜLT";
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                btn.textContent = "⛶ TAM EKRAN";
+            }
+        }
+
+        // ── MODALS
+        function openModal(id) { document.getElementById(id).classList.add('show'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        // ── CLOCK
+        function updateClock() {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString('tr-TR');
+        }
+        setInterval(updateClock, 1000); updateClock();
+
+        // ── SENSOR DATA
+        const sensors = {
+            nem: { cur: 62, min: 18, max: 95, ideal: [40, 75], history: [], color: '#00ff96' },
+            temp: { cur: 24, min: 5, max: 45, ideal: [15, 35], history: [], color: '#ff8c00' },
+            hava: { cur: 58, min: 20, max: 95, ideal: [40, 80], history: [], color: '#42a5f5' },
+            ph: { cur: 6.8, min: 4, max: 9, ideal: [6.0, 7.5], history: [], color: '#a78bfa' },
+        };
+
+        function statusOf(k, v) {
+            const s = sensors[k];
+            if (v < s.ideal[0] || v > s.ideal[1]) return v < s.ideal[0] ? { txt: '⬇️ DÜŞÜK', col: '#ff4444' } : { txt: '⬆️ YÜKSEK', col: '#ffb300' };
+            return { txt: '✅ NORMAL', col: '#00ff96' };
+        }
+
+        function updateSensors() {
+            Object.keys(sensors).forEach(k => {
+                const s = sensors[k];
+                const delta = (Math.random() - 0.48) * 1.5 * (k === 'ph' ? 0.1 : 1);
+                s.cur = Math.max(s.min, Math.min(s.max, +(s.cur + delta).toFixed(k === 'ph' ? 1 : 1)));
+                s.history.push(s.cur);
+                if (s.history.length > 40) s.history.shift();
+
+                const disp = k === 'ph' ? s.cur.toFixed(1) : Math.round(s.cur);
+                document.getElementById(`val-${k}`).textContent = disp;
+                const st = statusOf(k, s.cur);
+                document.getElementById(`dot-${k}`).style.background = st.col;
+                document.getElementById(`dot-${k}`).style.boxShadow = `0 0 6px ${st.col}`;
+                document.getElementById(`lbl-${k}`).textContent = st.txt;
+                document.getElementById(`lbl-${k}`).style.color = st.col;
+                drawMiniGraph(k);
+            });
+            updateFieldGrid();
+            maybeAddLog();
+        }
+
+        function drawMiniGraph(k) {
+            const canvas = document.getElementById(`g-${k}`);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            const hist = sensors[k].history;
+            if (hist.length < 2) return;
+            const s = sensors[k];
+            const range = s.max - s.min;
+            ctx.strokeStyle = s.color;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = s.color;
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            hist.forEach((v, i) => {
+                const x = (i / (hist.length - 1)) * w;
+                const y = h - (((v - s.min) / range) * h);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.globalAlpha = 0.06;
+            ctx.fillStyle = s.color;
+            const y1 = h - (((s.ideal[1] - s.min) / range) * h);
+            const y2 = h - (((s.ideal[0] - s.min) / range) * h);
+            ctx.fillRect(0, y1, w, y2 - y1);
+            ctx.globalAlpha = 1;
+        }
+
+        // ── FIELD GRID
+        const fieldGrid = document.getElementById('fieldGrid');
+        const cells = [];
+        for (let i = 0; i < 24; i++) {
+            const c = document.createElement('div');
+            c.className = 'field-cell cell-ok';
+            c.innerHTML = '🌾<span class="cell-val">--</span>';
+            fieldGrid.appendChild(c);
+            cells.push(c);
+        }
+        function updateFieldGrid() {
+            const nem = sensors.nem.cur;
+            cells.forEach((c, i) => {
+                const noise = (Math.random() - 0.5) * 20;
+                const v = Math.max(10, Math.min(100, nem + noise));
+                c.querySelector('.cell-val').textContent = Math.round(v) + '%';
+                c.className = 'field-cell ' + (v < 30 ? 'cell-alert' : v < 45 ? 'cell-warn' : 'cell-ok');
+            });
+        }
+
+        // ── LOG FEED
+        const logFeed = document.getElementById('logFeed');
+        const logMessages = [
+            () => { const v = Math.round(sensors.nem.cur); return { txt: `[NEM-03] Blok C3 nem: ${v}% — ${v < 40 ? '⚠️ UYARI: Sulama gerekebilir' : '✅ Normal aralık'}`, cls: v < 40 ? 'warn' : '' } },
+            () => { const v = Math.round(sensors.temp.cur); return { txt: `[TEMP-07] Hava sıcaklığı: ${v}°C — ${v > 38 ? '🔥 YÜKSEK: Buharlaşma artıyor' : '✅ Uygun'}`, cls: v > 38 ? 'alert' : '' } },
+            () => { return { txt: `[pH-02] Toprak pH: ${sensors.ph.cur.toFixed(1)} — ${sensors.ph.cur < 6.0 ? '⚠️ Kireç önerilir' : '✅ Optimal'}`, cls: sensors.ph.cur < 6.0 ? 'warn' : '' } },
+            () => { return { txt: `[SYS] Veri paketi gönderildi → Sunucu: agrisim.cloud ✅`, cls: '' } },
+            () => { return { txt: `[HAVA] Hava nemi: ${Math.round(sensors.hava.cur)}% — Fungi riski: ${sensors.hava.cur > 80 ? '⚠️ YÜKSEK' : 'Düşük'}`, cls: sensors.hava.cur > 80 ? 'warn' : '' } },
+        ];
+        let logIdx = 0;
+        function maybeAddLog() {
+            if (Math.random() < 0.3) {
+                const msg = logMessages[logIdx % logMessages.length]();
+                logIdx++;
+                const entry = document.createElement('div');
+                entry.className = 'log-entry ' + (msg.cls || '');
+                const ts = new Date().toLocaleTimeString('tr-TR');
+                entry.textContent = `${ts} ${msg.txt}`;
+                logFeed.prepend(entry);
+                while (logFeed.children.length > 12) logFeed.lastChild.remove();
+            }
+        }
+
+        // ── QUIZ LOGIC
+        const quizzes = [
+            { q: 'Toprak nemi %25\'e düştüğünde hangi sensör uyarı verir?', opts: ['pH sensörü', 'Nem sensörü', 'Sıcaklık sensörü', 'CO₂ sensörü'], correct: 1 },
+            { q: 'Tarladaki IoT sensörleri, topladıkları verileri analiz edilmek üzere nereye gönderir?', opts: ['Bulut sunucusuna (Cloud)', 'USB belleğe', 'Yazıcıya', 'Sadece kendi ekranına'], correct: 0 },
+            { q: 'Sistem, pH değerini 5.0 olarak ölçerse log ekranında nasıl bir öneri sunar?', opts: ['Sulamayı artır', 'Sıcaklığı düşür', 'Kireç uygulaması yap', 'Beklemeye devam et'], correct: 2 },
+            { q: 'Büyük tarım arazilerinde sensör verilerini iletmek için kullanılan "LoRaWAN" teknolojisinin temel özelliği nedir?', opts: ['Hava tahmini yapması', 'Toprağı kendi kendine kazması', 'Sulama motorlarını çalıştırması', 'Uzun mesafeli ve düşük güç tüketimli veri iletimi sağlaması'], correct: 3 },
+            { q: 'Sensör verisi "41°C sıcaklık ve %18 toprak nemi" gösteriyorsa en mantıklı sistem aksiyonu ne olmalıdır?', opts: ['Gübreleme sistemini başlatmak', 'Sulamayı başlatmak ve uyarı göndermek', 'pH ölçümünü durdurmak', 'Hiçbir şey yapmamak'], correct: 1 },
+        ];
+
+        let qIdx = 0, qScore = 0;
+        const totalQ = 5;
+
+        function loadQuiz() {
+            if (qIdx >= totalQ) {
+                checkWinCondition();
+                return;
+            }
+            const q = quizzes[qIdx];
+            document.getElementById('quizQ').textContent = `Soru ${qIdx + 1}/${totalQ}: ` + q.q;
+            const opts = document.getElementById('quizOpts');
+
+            opts.innerHTML = q.opts.map((o, i) => `<button class="qopt" onclick="answerQ(${i})">${String.fromCharCode(65 + i)}. ${o}</button>`).join('');
+        }
+
+        function answerQ(i) {
+            const q = quizzes[qIdx];
+            const correct = (i === q.correct);
+            if (correct) qScore++;
+
+            document.getElementById('quizScore').textContent = qScore;
+
+            document.querySelectorAll('.qopt').forEach((o, j) => {
+                o.disabled = true;
+                if (j === q.correct) o.classList.add('correct');
+                else if (j === i && !correct) o.classList.add('wrong');
+            });
+
+            const opts = document.getElementById('quizOpts');
+            const btn = document.createElement('button');
+            btn.className = 'quiz-next';
+            btn.textContent = (qIdx === totalQ - 1) ? 'SONUÇLARI ANALİZ ET' : 'SIRADAKİ SORU →';
+            btn.onclick = () => { qIdx++; loadQuiz(); };
+            opts.appendChild(btn);
+        }
+
+        function checkWinCondition() {
+            if (qScore >= 4) {
+                openModal('successModal');
+            } else {
+                document.getElementById('failScore').textContent = qScore;
+                openModal('failModal');
+            }
+        }
+
+        function resetQuiz() {
+            closeModal('failModal');
+            qIdx = 0;
+            qScore = 0;
+            document.getElementById('quizScore').textContent = qScore;
+            loadQuiz();
+        }
+
+        loadQuiz();
+
+        // ── INIT
+        for (let k in sensors) { const s = sensors[k]; for (let i = 0; i < 20; i++) { s.history.push(s.cur + (Math.random() - 0.5) * 5 * (k === 'ph' ? 0.2 : 1)); } }
+        updateSensors();
+        setInterval(updateSensors, 1500);
+    </script>
 </body>
+
 </html>
